@@ -6,7 +6,7 @@ T* TriSearch(T* First, T target, int length, bool (*compare)(T a,T b))
 	T* Third = First + length * 2 / 3;
 	T* End = First + length;
 	if (length <= 2)
-		return *First == target ? First : *(End-1) == target ?  End - 1 : nullptr;
+		return *First == target ? First : *(End - 1) == target ? End - 1 : nullptr;
 	if (compare(target, *First) || compare(*(End - 1), target))
 		return nullptr;
 	if (compare(target, *Second))
