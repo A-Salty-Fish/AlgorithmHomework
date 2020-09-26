@@ -29,5 +29,17 @@
     <ClInclude Include="4.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="BTree.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="3.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="2.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="1.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
