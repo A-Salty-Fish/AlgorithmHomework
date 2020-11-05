@@ -6,6 +6,7 @@ public:
     bool search_submatrix(vector<vector<int>>& matrix, int target,
         int left, int right, int up, int down)
     {
+        //边界条件
         if (left > right || up > down)
             return false;
         else if (target < matrix[up][left] || target > matrix[down][right])
@@ -13,13 +14,15 @@ public:
         else
         {
             int row = up;
-            int mid = (left + right);// 2
+            int mid = (left + right);
+            //在中间一列寻找某一行 使得目标落在左下或右上
             while (row <= down and target >= matrix[row][mid])
             {
                 if (target == matrix[row][mid])
                     return true;
                 row = row + 1;
             }
+            //在左下或右上递归搜索
             return search_submatrix(matrix, target, left, mid - 1, row, down) || search_submatrix(matrix, target, mid + 1, right, up, row - 1);
         }
     }

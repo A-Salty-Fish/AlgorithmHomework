@@ -19,4 +19,21 @@
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="jump2.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="searchMatrix.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="letterCasePermutation.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="maxProfit.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="canPartition.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>

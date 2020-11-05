@@ -141,6 +141,13 @@
   <ItemGroup>
     <ClCompile Include="LeetCode.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="canPartition.h" />
+    <ClInclude Include="jump2.h" />
+    <ClInclude Include="letterCasePermutation.h" />
+    <ClInclude Include="maxProfit.h" />
+    <ClInclude Include="searchMatrix.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
