@@ -535,5 +535,36 @@ public:
 给定一个字符串S，通过将字符串S中的每个字母转变大小写，我们可以获得一个新的字符串。返回所有可能得到的字符串集合。
 ```
 ```cpp
-
+class Solution {
+public:
+    void dfs(string S, vector<string>& Result, int n)
+    {
+        if (n == S.length()) // 到边界则存入一个解
+        {
+            Result.push_back(S);
+            return;
+        }
+        if ((S[n] >= 'a' && S[n] <= 'z')) // 如果是小写字母
+        {
+            S[n] -= 32;// 变成大写字母
+            dfs(S,Result,n+1);
+            S[n] += 32;// 回溯
+        }
+        else if ((S[n] >= 'A' && S[n] <= 'Z'))// 如果是大写字母
+        {
+            S[n] += 32;// 变成小写字母
+            dfs(S,Result,n+1);
+            S[n] -= 32;// 回溯
+        }
+        dfs(S,Result,n+1);
+    }
+    vector<string> letterCasePermutation(string S) {
+        int length = S.length();
+        vector<string> Result;
+        if (length == 0) 
+            return Result;
+        dfs(S,Result,0);
+        return Result;
+    }
+};
 ```
