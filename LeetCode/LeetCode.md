@@ -568,3 +568,30 @@ public:
     }
 };
 ```
+## 77. 组合
+```
+给定两个整数 n 和 k，返回 1 ... n 中所有可能的 k 个数的组合。
+```
+```cpp
+class Solution {
+public:
+    vector<vector<int>> results;// 所有解
+    vector<int> result;// 一个解
+    vector<vector<int>> combine(int n, int k) {
+        dfs(n, 1, k);
+        return results;
+    }
+    void dfs(int n, int current, int remain) {
+        if (current > n + 1) return;
+        if (remain == 0) { // 得到一个解
+            results.push_back(result);
+            return;
+        }
+        result.push_back(current);
+        dfs(n, current+1, remain-1);
+        // 回溯
+        result.pop_back();
+        dfs(n, current+1, remain);
+    }
+};
+```
