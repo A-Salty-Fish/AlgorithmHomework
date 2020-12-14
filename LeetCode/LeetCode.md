@@ -1164,3 +1164,204 @@ public:
     }
 };
 ```
+# 动态规划
+## 300. 最长上升子序列
+```
+给定一个无序的整数数组，找到其中最长上升子序列的长度。
+示例:
+输入: [10,9,2,5,3,7,101,18]
+输出: 4 
+解释: 最长的上升子序列是 [2,3,7,101]，它的长度是 4。
+```
+```cpp
+class Solution {
+public:
+    int lengthOfLIS(vector<int>& nums) {
+        int n=nums.size();
+        if (n == 0) return 0;
+        // 记录最长长度
+        int maxL = 1;
+        vector<int> dp(n, 0);
+        for (int i = 0; i < n; ++i) {
+            dp[i] = 1;//初始状态
+            for (int j = 0; j < i; ++j) {
+                if (nums[j] < nums[i]) {
+                    // 状态转移方程
+                    dp[i] = max(dp[i], dp[j] + 1);
+                    if (dp[i]>maxL) maxL = dp[i];
+                }
+            }
+        }
+        // 返回最大的那个元素
+        return maxL;
+    }
+};
+```
+## 64. 最小路径和
+```
+给定一个包含非负整数的 m x n 网格 grid ，请找出一条从左上角到右下角的路径，使得路径上的数字总和为最小。
+说明：每次只能向下或者向右移动一步。
+```
+```cpp
+class Solution {
+public:
+    int minPathSum(vector<vector<int>>& grid) {
+        for (int i = 0;i<grid.size();i++)
+        {
+            if (i > 0)
+                grid[i][0] += grid[i-1][0];
+        }
+        for (int j = 0;j<grid[0].size();j++)
+        {
+            if (j > 0)
+                grid[0][j] += grid[0][j-1];
+        }
+        for (int i = 1;i<grid.size();i++)
+        {
+            for (int j = 1;j<grid[0].size();j++)
+            {
+                grid[i][j] += min(grid[i-1][j],grid[i][j-1]);
+            }
+        }
+        return grid[grid.size()-1][grid[0].size()-1];
+    }
+};
+```
+## 1314. 矩阵区域和
+```
+给你一个 m * n 的矩阵 mat 和一个整数 K ，请你返回一个矩阵 answer ，其中每个 answer[i][j] 是所有满足下述条件的元素 mat[r][c] 的和： 
+i - K <= r <= i + K, j - K <= c <= j + K 
+(r, c) 在矩阵内。
+```
+```cpp
+class Solution {
+public:
+    // 规范矩阵前缀和范围
+    int get(const vector<vector<int>>& pre, int m, int n, int x, int y) {
+        x = max(min(x, m), 0);
+        y = max(min(y, n), 0);
+        return pre[x][y];
+    }
+    vector<vector<int>> matrixBlockSum(vector<vector<int>>& mat, int K) {
+        int m = mat.size(), n = mat[0].size();
+        vector<vector<int>> P(m + 1, vector<int>(n + 1)); // 矩阵前缀和
+        for (int i = 1; i <= m; ++i) {
+            for (int j = 1; j <= n; ++j) {
+                P[i][j] = P[i - 1][j] + P[i][j - 1] - P[i - 1][j - 1] + mat[i - 1][j - 1];
+            }
+        }
+        vector<vector<int>> ans(m, vector<int>(n));
+        for (int i = 0; i < m; ++i) {
+            for (int j = 0; j < n; ++j) {
+                ans[i][j] = get(P, m, n, i + K + 1, j + K + 1) - get(P, m, n, i - K, j + K + 1) - get(P, m, n, i + K + 1, j - K) + get(P, m, n, i - K, j - K);
+            }
+        }
+        return ans;
+    }
+};
+```
+## 321. 拼接最大数
+```
+给定长度分别为 m 和 n 的两个数组，其元素由 0-9 构成，表示两个自然数各位上的数字。现在从这两个数组中选出 k (k <= m + n) 个数字拼接成一个新的数，要求从同一个数组中取出的数字保持其在原数组中的相对顺序。
+求满足该条件的最大数。结果返回一个表示该最大数的长度为 k 的数组。
+```
+```cpp
+class Solution {
+public:
+    vector<int> maxNumber(vector<int> &nums1, vector<int> &nums2, int k) {
+        vector<int> ans;
+        const int n1 = nums1.size();
+        const int n2 = nums2.size();
+        for (int k1 = 0; k1 <= k; ++k1) {
+            const int k2 = k - k1;
+            if (k1 > n1 || k2 > n2) {
+                continue;
+            }
+            ans = max(ans, merge(getMaxNum(nums1, k1), getMaxNum(nums2, k2)));
+        }
+        return ans;
+    }
+    // 得到长度为k的最大数组
+    vector<int> getMaxNum(const vector<int> &nums, const int k) {
+        if (k == 0) {
+            return {};
+        }
+        vector<int> ans;
+        int to_pop = nums.size() - k;
+        for (const int num : nums) {
+            while (!ans.empty() && num > ans.back() && to_pop-- > 0) {
+                ans.pop_back();
+            }
+            ans.push_back(num);
+        }
+        ans.resize(k);
+        return ans;
+    }
+    vector<int> merge(const vector<int> &nums1, const vector<int> &nums2) {
+        vector<int> ans;
+        auto s1 = nums1.begin();
+        auto e1 = nums1.end();
+        auto s2 = nums2.begin();
+        auto e2 = nums2.end();
+        while (s1 != e1 || s2 != e2) {
+            // 按顺序将更大的数连接在前面
+            ans.push_back(lexicographical_compare(s1, e1, s2, e2) ? *s2++ : *s1++);
+        }
+        return ans;
+    }
+};
+```
+## 978. 最长湍流子数组
+```
+当 A 的子数组 A[i], A[i+1], ..., A[j] 满足下列条件时，我们称其为湍流子数组：
+若 i <= k < j，当 k 为奇数时， A[k] > A[k+1]，且当 k 为偶数时，A[k] < A[k+1]；
+或 若 i <= k < j，当 k 为偶数时，A[k] > A[k+1] ，且当 k 为奇数时， A[k] < A[k+1]。
+也就是说，如果比较符号在子数组中的每个相邻元素对之间翻转，则该子数组是湍流子数组。
+返回 A 的最大湍流子数组的长度。
+```
+```cpp
+class Solution {
+public:
+    int maxTurbulenceSize(vector<int>& arr) {
+        vector<vector<int>> dp(arr.size(), vector<int>(2,1));
+        int ans = 1;
+        for(int i = 1; i < arr.size(); ++i){
+            // 大于小于号交替
+            if(arr[i] > arr[i-1]){
+                dp[i][0] = dp[i-1][1] + 1;
+            }else if(arr[i] < arr[i-1]){
+                dp[i][1] = dp[i-1][0] + 1;
+            }else{
+                continue;
+            }
+            ans = max(ans, max(dp[i][1], dp[i][0]));
+        }
+        return ans;
+    }
+};
+```
+## 494. 目标和
+```
+给定一个非负整数数组，a1, a2, ..., an, 和一个目标数，S。现在你有两个符号 + 和 -。对于数组中的任意一个整数，你都可以从 + 或 -中选择一个符号添加在前面。
+返回可以使最终数组和为目标数 S 的所有添加符号的方法数。
+```
+```cpp
+class Solution {
+public:
+    int findTargetSumWays(vector<int>& nums, int S) {
+        vector<vector<int>> dp(nums.size(),vector<int>(2001,0));
+        // dp[i][j+1000] 代表前i个数和为j的情况
+        dp[0][nums[0] + 1000] = 1;
+        dp[0][-nums[0] + 1000] += 1;
+        for (int i = 1; i < nums.size(); i++) {
+            for (int sum = -1000; sum <= 1000; sum++) {
+                if (dp[i - 1][sum + 1000] > 0) {// 状态转移
+                    dp[i][sum + nums[i] + 1000] += dp[i - 1][sum + 1000];
+                    dp[i][sum - nums[i] + 1000] += dp[i - 1][sum + 1000];
+                }
+            }
+        }
+        return S > 1000 ? 0 : dp[nums.size() - 1][S + 1000];
+    }
+};
+```
