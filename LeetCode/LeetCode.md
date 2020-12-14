@@ -1,4 +1,4 @@
-
+[toc]
 # 分治法
 ## 240.搜索二维矩阵II
 ```
@@ -593,5 +593,295 @@ public:
         result.pop_back();
         dfs(n, current+1, remain);
     }
+};
+```
+## 112. 路径总和
+```
+给定一个二叉树和一个目标和，判断该树中是否存在根节点到叶子节点的路径，这条路径上所有节点值相加等于目标和。
+```
+```cpp
+class Solution {
+public:
+    bool hasPathSum(TreeNode* root, int sum) {
+        if (root==NULL) return false;
+        return dfs(root,sum);
+    }
+    bool dfs(TreeNode* currentNode, int remain)
+    {
+        if (currentNode == NULL)
+            return false;
+        // 到叶节点
+        if (currentNode->left==NULL&&currentNode->right==NULL)
+            return currentNode->val == remain;
+        remain -= currentNode->val;
+        bool left = dfs(currentNode->left,remain);
+        bool right = dfs(currentNode->right,remain);
+        return left || right;
+    }
+};
+```
+## 1293. 网格中的最短路径
+PS：回溯+剪枝只能跑通一半的答案，后面就超时了。
+```
+给你一个m * n 的网格，其中每个单元格不是 0（空）就是 1（障碍物）。每一步，您都可以在空白单元格中上、下、左、右移动。
+如果您 最多 可以消除 k 个障碍物，请找出从左上角 (0, 0) 到右下角 (m-1, n-1) 的最短路径，并返回通过该路径所需的步数。如果找不到这样的路径，则返回 -1。
+```
+```cpp
+class Solution {
+public:
+    int minStep = INT32_MAX;
+    int shortestPath(vector<vector<int>>& grid, int k) {
+        dfs(grid,0,0,grid.size()-1,grid[0].size()-1,k,0);
+        return minStep == INT32_MAX ? -1 : minStep;
+    }
+    // 剪枝函数 返回步数下界
+    int lowBound(int currentX, int currentY,int targetX, int targetY) {
+        return (targetY - currentY) + (targetX - currentX);
+    }
+    void dfs(vector<vector<int>>& grid,int currentX, int currentY,
+     int targetX, int targetY, int k, int step) {
+         // 到达终点
+        if (currentX==targetX&&currentY==targetY)
+            if (step < minStep)
+                {
+                    minStep = step;
+                    return;
+                }
+        // 越界
+        if (currentX<0||currentX>targetX||currentY<0||currentY>targetY)
+            return;
+        int tmp = grid[currentX][currentY]; // 记录该格状态
+        if (tmp == -1) // 该格走过
+            return;
+        // 下界函数剪枝
+        if (lowBound(currentX, currentY, targetX, targetY) + step > minStep)
+            return;
+        // 走到障碍物
+        if (tmp==1)
+        {
+            // 有消除障碍物的机会
+            if (k>0)
+            {
+                grid[currentX][currentY] = 0;// 将其标记为可走
+                dfs(grid,currentX,currentY,targetX,targetY,k-1,step);
+                grid[currentX][currentY] = tmp;// 回溯
+            }
+            return;
+        }
+        // 当前格可走 拓展四个方向 优先拓展右下
+        if (tmp == 0)
+        {
+            grid[currentX][currentY] = -1;// 标记为走过
+            dfs(grid,currentX+1,currentY,targetX,targetY,k,step+1);
+            dfs(grid,currentX,currentY+1,targetX,targetY,k,step+1);
+            dfs(grid,currentX-1,currentY,targetX,targetY,k,step+1);
+            dfs(grid,currentX,currentY-1,targetX,targetY,k,step+1);
+            grid[currentX][currentY] = tmp;// 回溯
+        }
+    }
+};
+```
+# 分支限界法
+## 698. 划分为k个相等的子集(写不来)
+```
+给定一个整数数组  nums 和一个正整数 k，找出是否有可能把这个数组分成 k 个非空子集，其总和都相等。
+示例 1：
+输入： nums = [4, 3, 2, 3, 5, 2, 1], k = 4
+输出： True
+说明： 有可能将其分成 4 个子集（5），（1,4），（2,3），（2,3）等于总和。
+```
+```cpp
+class Solution {
+public:
+    int n, len;
+    bool canPartitionKSubsets(vector<int>& nums, int k) {
+        n=nums.size();
+        vector<bool> vis(n, false);
+        sort(nums.begin(), nums.end());
+        for(int i=0; i<n; i++) len += nums[i];
+        if(len%k!=0) return false;
+        len=len/k;
+        return dfs(n-1, len, n, nums, vis);
+    }
+    
+    //当前从id位置开始枚举,还有有个sz子集未合法是否能够使所有子集合法
+    bool dfs(int id, int cur_len, int sz, vector<int>& arr, vector<bool>& vis) {
+        if(sz == 0) return true; //n个数全部装下
+        bool isok;
+        for(int i=id; i>=0; i--) {
+            if(!vis[i] && cur_len>=arr[i]) { //当前的数能够装入当前子集中
+                vis[i]=true;
+                isok = false;
+                if(cur_len == arr[i]) isok = dfs(n-1, len, sz-1, arr, vis); //当前子集已满则要重新找一个len子集
+                else isok = dfs(i-1, cur_len-arr[i], sz-1, arr, vis); //当前子集将目前最大的数取了,使得后面的子集更容易凑
+                if(isok) return isok; //找到一组合法的拼凑序列
+                if(cur_len==0) return isok; //最大的数不能装到任何子集使其形成合法序列
+                //否则该数属于其他子集,当前子集不应该取它,进行判重剪枝
+                vis[i] = false; //回溯
+                while(i>0 && arr[i-1]==arr[i]) i--;
+                
+            }
+        }
+        return false;
+    }
+};
+```
+
+## 416.相同子集和分割
+```
+给定一个只包含正整数的非空数组。是否可以将这个数组分割成两个子集，使得两个子集的元素和相等。
+```
+```cpp
+class Solution {
+public:
+    struct Node{
+        int depth;
+        int remain;
+        Node(int d,int r):depth(d),remain(r){}
+        bool operator<(const Node& a) const
+        {
+        return remain > a.remain; //小顶堆
+        }
+    };
+    bool canPartition(vector<int>& nums) {
+        int sum = accumulate(nums.begin(),nums.end(),0);
+        if (sum % 2 == 1)
+            return false;
+        vector<unordered_set<int>> IsRepeat;
+        IsRepeat.resize(nums.size());
+        priority_queue<Node> p;// 广度优先搜索
+        p.push(Node(0,sum/2));
+        p.push(Node(0,sum/2-nums[0]));
+        while (!p.empty())
+        {
+            Node current = p.top();p.pop();
+            int remain = current.remain, depth = current.depth;
+            if (remain == 0) return true;
+            // 剪枝
+            if (remain<0) continue;
+            if (depth >= nums.size() - 1) continue;
+            // 去除重复子树
+            if (IsRepeat[depth].find(remain) !=
+             IsRepeat[depth].end()) continue;
+            IsRepeat[depth].insert(remain);
+            p.push(Node(depth+1,remain));
+            p.push(Node(depth+1,remain-nums[depth+1]));
+        }
+        return false;
+    }
+};
+```
+## 1210. 穿过迷宫的最少移动次数
+```
+我们在一个 n*n 的网格上构建了新的迷宫地图，蛇的长度为 2，也就是说它会占去两个单元格。蛇会从左上角（(0, 0) 和 (0, 1)）开始移动。我们用 0 表示空单元格，用 1 表示障碍物。蛇需要移动到迷宫的右下角（(n-1, n-2) 和 (n-1, n-1)）。
+每次移动，蛇可以这样走：
+如果没有障碍，则向右移动一个单元格。并仍然保持身体的水平／竖直状态。
+如果没有障碍，则向下移动一个单元格。并仍然保持身体的水平／竖直状态。
+如果它处于水平状态并且其下面的两个单元都是空的，就顺时针旋转 90 度。蛇从（(r, c)、(r, c+1)）移动到 （(r, c)、(r+1, c)）。
+如果它处于竖直状态并且其右面的两个单元都是空的，就逆时针旋转 90 度。蛇从（(r, c)、(r+1, c)）移动到（(r, c)、(r, c+1)）。
+返回蛇抵达目的地所需的最少移动次数。
+如果无法到达目的地，请返回 -1。
+```
+```cpp
+class Solution {
+public:
+    int minimumMoves(vector<vector<int>>& grid) {
+        int n = grid.size();
+        queue<pair<pair<int,int>,bool>> que;//蛇头的位置和是否水平
+        int retCnt = 0;
+		int size = 0;
+        //防止重复加入数据。相当于剪枝
+        vector<vector<int>> hCnt;
+        vector<vector<int>> vCnt;
+        for (int i = 0; i < n; i++) {
+             vector<int> tmp(n, -1);
+             hCnt.push_back(tmp);
+             vCnt.push_back(tmp);
+        }
+        que.push(make_pair(make_pair(0,1), true));
+        while (!que.empty()) {            
+            size = que.size();			
+            //cout << "****** retCnt = " << retCnt << ", n:" << n << endl;
+			int r;
+			int c;
+			bool isPing;
+			while (size > 0) {
+			    r = que.front().first.first;
+				c = que.front().first.second;
+				isPing = que.front().second;
+				que.pop();
+                size--;
+
+                if ((isPing && hCnt[r][c] >= 0 && hCnt[r][c] <= retCnt) || ((!isPing) && vCnt[r][c] >= 0 && vCnt[r][c] <= retCnt)) {
+                    continue;
+                }
+                //存储数据，剪枝用。空间换时间。不然会超时
+                if (isPing)     hCnt[r][c] = retCnt;
+                if (!isPing)    vCnt[r][c] = retCnt;
+
+                if ((r == n-1) && (c == n-1) && isPing) {   return retCnt;  }
+				//水平向右
+				if ((isPing) && (c+1<n) && (grid[r][c+1] == 0))  {que.push(make_pair(make_pair(r, c+1), true));}
+				//水平向下
+				if ((isPing) && (r+1<n) && (grid[r+1][c] == 0) && (grid[r+1][c-1] == 0))  {que.push(make_pair(make_pair(r+1, c), true));}
+				//竖直向下
+				if ((!isPing) && (r+1<n) && (grid[r+1][c] == 0))  {que.push(make_pair(make_pair(r+1, c), false));}
+				//竖直向右
+				if ((!isPing) && (c+1<n) && (grid[r][c+1] == 0) && (grid[r-1][c+1] == 0))  {que.push(make_pair(make_pair(r, c+1), false));}
+				//水平旋转
+				if ((isPing) && (r+1<n) && (grid[r+1][c] == 0) && (grid[r+1][c-1] == 0))	{que.push(make_pair(make_pair(r+1, c-1), false));}        
+				//竖直旋转
+				if ((!isPing) && (c+1<n) && (grid[r][c+1] == 0) && (grid[r-1][c+1] == 0)) 	{que.push(make_pair(make_pair(r-1, c+1), true));}
+			}
+            retCnt++;
+        }
+        return -1;
+    }
+};
+class Solution2 {
+public:
+    int minimumMoves(vector<vector<int>>& grid) {
+        int n = grid.size() ;
+        for (int i = 0; i < n; i++) {
+             vector<int> tmp(n, -1);
+             hCnt.push_back(tmp);
+             vCnt.push_back(tmp);
+        }
+        dfs(grid, hCnt, vCnt, 0, 1, 1, 0);
+        return hCnt[n-1][n-1];
+        //if (retCnt == INT_MAX)  return -1;
+        //return retCnt;
+    }
+    void dfs(vector<vector<int>>& grid, vector<vector<int>>& hCnt, vector<vector<int>>& vCnt, int r, int c, bool isPing, int step) {
+        int n = grid.size();
+        //剪枝是dfs的性能关键
+        if ((isPing && hCnt[r][c] >= 0 && hCnt[r][c] <= step) || ((!isPing) && vCnt[r][c] >= 0 && vCnt[r][c] <= step)) {
+            return;
+        }
+        //存储数据，剪枝用。空间换时间。不然会栈溢出
+        if (isPing)     hCnt[r][c] = step;
+        if (!isPing)    vCnt[r][c] = step;
+
+        if ((r >= n-1) && (c >= n-1)) {
+            if (isPing)   retCnt = min(retCnt, step);
+            return;
+        } 
+        //水平向右
+        if ((isPing) && (c+1<n) && (grid[r][c+1] == 0))  {dfs(grid, hCnt, vCnt, r, c+1, 1, step+1);}
+        //水平向下
+        if ((isPing) && (r+1<n) && (grid[r+1][c] == 0) && (grid[r+1][c-1] == 0))  {dfs(grid,  hCnt, vCnt, r+1, c, 1, step+1);}
+        //竖直向下
+        if ((!isPing) && (r+1<n) && (grid[r+1][c] == 0))  {dfs(grid,  hCnt, vCnt, r+1, c, 0, step+1);}
+        //竖直向右
+        if ((!isPing) && (c+1<n) && (grid[r][c+1] == 0) && (grid[r-1][c+1] == 0))  {dfs(grid,  hCnt, vCnt, r, c+1, 0, step+1);}
+        //水平旋转        
+        if ((isPing) && (r+1<n) && (grid[r+1][c] == 0) && (grid[r+1][c-1] == 0))   { dfs(grid,  hCnt, vCnt, r+1, c-1, 0, step+1);}        
+        //竖直旋转
+        if ((!isPing) && (c+1<n) && (grid[r][c+1] == 0) && (grid[r-1][c+1] == 0))  {dfs(grid,  hCnt, vCnt, r-1, c+1, 1, step+1);}
+    }
+private:
+    int retCnt = INT_MAX;
+    vector<vector<int>> hCnt;
+    vector<vector<int>> vCnt;
 };
 ```
