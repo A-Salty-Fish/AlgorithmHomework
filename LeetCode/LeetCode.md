@@ -885,3 +885,282 @@ private:
     vector<vector<int>> vCnt;
 };
 ```
+# 贪心法
+## 1497. 检查数组对是否可以被 k 整除
+```
+给你一个整数数组 arr 和一个整数 k ，其中数组长度是偶数，值为 n 。
+现在需要把数组恰好分成 n / 2 对，以使每对数字的和都能够被 k 整除。
+如果存在这样的分法，请返回 True ；否则，返回 False 。
+```
+```cpp
+class Solution {
+public:
+    bool canArrange(vector<int>& arr, int k) {
+        // 存放余数的数组
+        vector<int> mod(k);
+        // 根据余数来存到对应位置
+        for (int num: arr) mod[(num%k+k)%k]++;
+        // 贪心，匹配互补的余数
+        for (int i = 1; i <= k/2; ++i)
+            if (mod[i]!= mod[k-i])
+                return false;
+        return mod[0] % 2 == 0;
+    }
+};
+```
+## 134. 加油站
+```
+在一条环路上有 N 个加油站，其中第 i 个加油站有汽油 gas[i] 升。
+你有一辆油箱容量无限的的汽车，从第 i 个加油站开往第 i+1 个加油站需要消耗汽油 cost[i] 升。你从其中的一个加油站出发，开始时油箱为空。
+如果你可以绕环路行驶一周，则返回出发时加油站的编号，否则返回 -1。。
+```
+```cpp
+class Solution {
+public:
+    int canCompleteCircuit(vector<int>& gas, vector<int>& cost) {
+        int curSum = 0;
+        int totalSum = 0;
+        int start = 0;
+        for (int i = 0; i < gas.size(); i++) {
+            // 尝试找一个局部最优解
+            curSum += gas[i] - cost[i];
+            totalSum += gas[i] - cost[i];
+            if (curSum < 0) {   // 当前累加rest[i]和 curSum一旦小于0
+                start = i + 1;  // 起始位置更新为i+1
+                curSum = 0;     // curSum从0开始
+            }
+        }
+        if (totalSum < 0) return -1; // 说明怎么走都不可能跑一圈了
+        return start;
+    }
+};
+```
+## 45. 跳跃游戏 II
+```
+给定一个非负整数数组，你最初位于数组的第一个位置。
+数组中的每个元素代表你在该位置可以跳跃的最大长度。
+你的目标是使用最少的跳跃次数到达数组的最后一个位置。
+```
+```cpp
+class Solution {
+public:
+    int jump(vector<int>& nums) {
+        if (nums.size() == 1) return 0;
+        int currentIndex = 0;
+        int count = 0;
+        while (true)
+        {
+            if (currentIndex + nums[currentIndex] >= nums.size() - 1) 
+                return count + 1;
+            int max = currentIndex + nums[currentIndex];
+            int nextStep = 1;
+            for (int i = 1;i<=nums[currentIndex];i++)
+            {
+                int currentLen = currentIndex + i + nums[currentIndex+i];
+                if (currentLen>=max)
+                {
+                    max = currentLen;
+                    nextStep = i;
+                }
+            }
+            currentIndex += nextStep;
+            count++;
+        }
+        return count;
+    }
+};
+```
+## 1288. 删除被覆盖区间
+```
+给你一个区间列表，请你删除列表中被其他区间所覆盖的区间。
+只有当 c <= a 且 b <= d 时，我们才认为区间 [a,b) 被区间 [c,d) 覆盖。
+在完成所有删除操作后，请你返回列表中剩余区间的数目。
+```
+```cpp
+class Solution {
+  public:
+  // 把区间按起始点排序，同起点则再按终点排序
+  static bool cmp(const vector<int> &o1, const vector<int> &o2) {
+      return o1[0] == o2[0] ? o2[1] < o1[1] : o1[0] < o2[0];
+  }
+  int removeCoveredIntervals(vector<vector<int>>& intervals) {
+    sort(intervals.begin(), intervals.end(),cmp);
+    int count = 0;
+    int end, prev_end = 0;
+    for (auto curr : intervals) {
+      end = curr[1];
+      if (prev_end < end) {
+        ++count;
+        prev_end = end;
+      }
+    }
+    return count;
+  }
+};
+```
+## 1386. 安排电影院座位
+```
+如上图所示，电影院的观影厅中有 n 行座位，行编号从 1 到 n ，且每一行内总共有 10 个座位，列编号从 1 到 10 。
+给你数组 reservedSeats ，包含所有已经被预约了的座位。比如说，researvedSeats[i]=[3,8] ，它表示第 3 行第 8 个座位被预约了。
+请你返回 最多能安排多少个 4 人家庭 。4 人家庭要占据 同一行内连续 的 4 个座位。隔着过道的座位（比方说 [3,3] 和 [3,4]）不是连续的座位，但是如果你可以将 4 人家庭拆成过道两边各坐 2 人，这样子是允许的。
+```
+```cpp
+class Solution {
+public:
+    // 按行排序
+    static bool cmp(vector<int>& seats1,vector<int>& seats2) {
+        return seats1[0] < seats2[0];
+    }
+    int maxNumberOfFamilies(int n, vector<vector<int>>& reservedSeats) {
+        sort(reservedSeats.begin(),reservedSeats.end(),cmp);
+        int index = 0;// 预定编号
+        int result = 0;// 结果
+        for (int i=1;i<=n;i++) // 遍历每一行
+        {
+            bool f1=false,f2=false,f3=false,f4=false;//表示每一个行的23 45 67 89位置有没有被预订
+            //检查该行被预订的位置
+            while (index<reservedSeats.size()&&reservedSeats[index][0]==i)
+            {          
+               switch (reservedSeats[index][1])
+               {
+                   case 2:
+                   case 3:
+                       f1=true;break;
+                   case 4:
+                   case 5:
+                       f2=true;break;
+                   case 6:
+                   case 7:
+                       f3=true;break;
+                   case 8:
+                   case 9:
+                       f4=true;break;
+               }
+               index++;
+            }
+            if(!f1&&!f2&&!f3&&!f4)//可以坐两个人家庭
+            {
+               result+=2;
+            }
+            else if(!f1&&!f2||!f3&&!f4||!f2&&!f3) result++;//只能坐一个家庭
+            if(index==reservedSeats.size())//已经全部遍历了订票的位置，退出
+            {
+             result+=(n-i)*2;//没有订票的行最多可以坐两个家庭
+             break;
+            }
+        }
+        return result;
+    }
+};
+```
+## 122. 买卖股票的最佳时机 II
+```
+给定一个数组，它的第 i 个元素是一支给定股票第 i 天的价格。
+设计一个算法来计算你所能获取的最大利润。你可以尽可能地完成更多的交易（多次买卖一支股票）。
+注意：你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）。
+```
+```cpp
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {   
+        int ans = 0;
+        int n = prices.size();
+        for (int i = 1; i < n; ++i) {
+            // 贪心，只要第二天涨就计入利润
+            ans += max(0, prices[i] - prices[i - 1]);
+        }
+        return ans;
+    }
+};
+```
+## 1558. 得到目标数组的最少函数调用次数
+![alt 属性文本](https://assets.leetcode.com/uploads/2020/07/10/sample_2_1887.png)
+```
+给你一个与 nums 大小相同且初始值全为 0 的数组 arr ，请你调用以上函数得到整数数组 nums 。
+请你返回将 arr 变成 nums 的最少函数调用次数。
+答案保证在 32 位有符号整数以内。
+```
+```cpp
+class Solution {
+public:
+    // 贪心
+    int minOperations(vector<int>& nums) {
+        int ret = 0, maxn = 0;
+        for (auto num : nums) {
+            maxn = max(maxn, num);
+            while (num) {// 统计二进制中1的数目
+                if (num & 1) {
+                    ret++;
+                }
+                num >>= 1;
+            }
+        }
+        if (maxn) { // 统计最大的那个数所需的操作数
+            while (maxn) {
+                ret++;
+                maxn >>= 1;
+            }
+            ret--;
+        }
+        return ret;
+    }
+};
+```
+## 1029. 两地调度
+```
+公司计划面试 2N 人。第 i 人飞往 A 市的费用为 costs[i][0]，飞往 B 市的费用为 costs[i][1]。
+返回将每个人都飞到某座城市的最低费用，要求每个城市都有 N 人抵达。
+```
+```cpp
+class Solution {
+public:
+    // 贪心排序 
+    static bool cmp(vector<int> &cost1,vector<int>&cost2)
+    {
+        return cost1[0]-cost1[1] > cost2[0] - cost2[1];
+    }
+    int twoCitySchedCost(vector<vector<int>>& costs) {
+        sort(costs.begin(),costs.end(),cmp);
+        int cost = 0;
+        // 前一半是去B更划得来的
+        for (int i = 0; i < costs.size() / 2;i++)
+        {
+            cost += costs[i][1];
+        }
+        // 后一半是去A更划得来的
+        for (int i = costs.size() / 2; i < costs.size();i++)
+        {
+            cost += costs[i][0];
+        }
+        return cost;
+    }
+};
+```
+## 1276. 不浪费原料的汉堡制作方案
+```
+圣诞活动预热开始啦，汉堡店推出了全新的汉堡套餐。为了避免浪费原料，请你帮他们制定合适的制作计划。
+给你两个整数 tomatoSlices 和 cheeseSlices，分别表示番茄片和奶酪片的数目。不同汉堡的原料搭配如下：
+巨无霸汉堡：4 片番茄和 1 片奶酪
+小皇堡：2 片番茄和 1 片奶酪
+请你以 [total_jumbo, total_small]（[巨无霸汉堡总数，小皇堡总数]）的格式返回恰当的制作方案，使得剩下的番茄片 tomatoSlices 和奶酪片 cheeseSlices 的数量都是 0。
+如果无法使剩下的番茄片 tomatoSlices 和奶酪片 cheeseSlices 的数量为 0，就请返回 []。
+```
+```cpp
+class Solution {
+public:
+    vector<int> numOfBurgers(int tomatoSlices, int cheeseSlices) {
+        vector<int> result;
+        // 直接解方程 4x+2y=tomato; x+y=cheese;
+        int big = (tomatoSlices - 2 * cheeseSlices)/2;
+        int small = cheeseSlices - big;
+        // 检验解的合法性
+        if (big < 0 || small < 0)
+            return result;
+        if (4*big+2*small!=tomatoSlices||big+small!=cheeseSlices)
+            return result;
+        result.push_back(big);
+        result.push_back(small);
+        return result;
+    }
+};
+```
