@@ -1365,3 +1365,241 @@ public:
     }
 };
 ```
+## 931. 下降路径最小和
+```
+给定一个方形整数数组 A，我们想要得到通过 A 的下降路径的最小和。
+下降路径可以从第一行中的任何元素开始，并从每一行中选择一个元素。在下一行选择的元素和当前行所选元素最多相隔一列。
+```
+```cpp
+class Solution {
+public:
+    int minFallingPathSum(vector<vector<int>>& A) {
+        vector<vector<int>> dp(A.size(),vector<int>(A[0].size(),0));
+        for (int i=0;i<dp[0].size();i++)
+            dp[0][i] = A[0][i];
+        for (int i=1;i<dp.size();i++)
+        {
+            for (int j=0;j<dp[0].size();j++)
+                dp[i][j] = A[i][j] + min(dp[i-1][j],
+                            min(dp[i-1][j-1>=0?j-1:0],
+                            dp[i-1][j+1<dp[0].size()?j+1:dp[0].size()-1]));
+        }
+        return *min_element(dp[A.size()-1].begin(),dp[A.size()-1].end());
+    }
+};
+```
+## 188. 买卖股票的最佳时机 IV
+```
+给定一个整数数组 prices ，它的第 i 个元素 prices[i] 是一支给定的股票在第 i 天的价格。
+设计一个算法来计算你所能获取的最大利润。你最多可以完成 k 笔交易。
+注意：你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）。
+```
+```cpp
+class Solution {
+public:
+    int maxProfit(int k, vector<int>& prices) {
+        vector<vector<vector<int>>> dp(prices.size(),vector<vector<int>>(k+1,vector(2,INT32_MIN/2)));
+        if (prices.size() == 0) return 0;
+        if (k == 0) return 0;
+        if (k > prices.size() / 2) k = prices.size() / 2;
+        // dp[i][j][k]含义：第i天 交易了j次 k为1持股0不持股
+        dp[0][0][0] = 0;
+        dp[0][1][1] = -prices[0];
+        for (int i = 1; i < prices.size(); i++) {
+            for (int j = 0; j <= k; j++) {
+                // 如果当前状态没有持有股票
+                // 他可以从昨天的没有持有股票的状态转入
+                // 也可以从昨天的持有股票状态卖出转入
+                dp[i][j][0] = max(dp[i-1][j][0], dp[i-1][j][1] + prices[i]);
+                if (j > 0) {
+                    // 如果当前状态持有了股票
+                    // 他可以从昨天的持有股票状态转入（持续持有）
+                    // 也可以从昨天的没有股票的状态买入转入
+                    dp[i][j][1] = max(dp[i-1][j][1], dp[i-1][j-1][0] - prices[i]);
+                }
+            }
+        }
+        int result = 0;
+        for (int i=0;i<=k;i++)
+            result = max(result,*max_element(dp[prices.size()-1][i].begin(), dp[prices.size()-1][i].end()));
+        return result;
+    }
+};
+```
+## 309. 最佳买卖股票时机含冷冻期
+```
+给定一个整数数组，其中第 i 个元素代表了第 i 天的股票价格 。​
+设计一个算法计算出最大利润。在满足以下约束条件下，你可以尽可能地完成更多的交易（多次买卖一支股票）:
+你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）。
+卖出股票后，你无法在第二天买入股票 (即冷冻期为 1 天)。
+```
+```cpp
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int num = prices.size();
+        if (num <= 1) return 0;
+        int (*dp)[3] = new int[num][3];
+        //dp[i][x]第i天进入(处于)x状态（0.不持股，1.持股，2.冷冻期）
+        //不持股
+        dp[0][0] = 0;
+        //持股
+        dp[0][1] = -prices[0];
+        //冷冻期
+        dp[0][2] = 0;
+        for(int i = 1;i < num;i++){
+            //第i天不持股可以从两种状态转移而来，1.第i-1天不持股，今天仍不买股票，保持不持              股状态。2.冷冻期结束了，但是今天不买股票。
+            dp[i][0] = max(dp[i-1][0], dp[i-1][2]);
+            //第i天持股可从两种状态转移而来，1.第i-1天不持股(包含昨天是冷冻期，冷冻期结束后转为不持股状态和昨天本身就不持股这两种情况)，今天买股票。2.第i-1天持股，今天不卖出，保持持股状态。
+            dp[i][1] = max(dp[i - 1][0] - prices[i], dp[i - 1][1]);
+            //只有第i-1天卖出了股票，第i天才处于冷冻期。
+            dp[i][2] = dp[i-1][1] + prices[i];
+        }
+        //只有最后一天不持股（不持股状态）或者前一天已经卖掉了（今天为冷冻期）这两种情况手里是拿着钱的，最大值在二者中产生。
+        return max(dp[num - 1][0], dp[num - 1][2]);
+    }
+};
+```
+## 1504. 统计全 1 子矩形
+```
+给你一个只包含 0 和 1 的 rows * columns 矩阵 mat ，请你返回有多少个 子矩形 的元素全部都是 1 。
+```
+```cpp
+class Solution {
+public:
+    int numSubmat(vector<vector<int>>& mat) {
+        int n = mat.size();
+        int m = mat[0].size();
+        // 存放这行左侧到该位置的连续1个数
+        vector<vector<int> > left(n,vector<int>(m));
+        int now = 0;
+        for(int i=0;i<n;i++){
+            now = 0;
+            for(int j=0;j<m;j++){
+                if(mat[i][j] == 1) now ++;
+                else now = 0;
+                left[i][j] = now;
+            }
+        }
+        int ans = 0,minx;
+        //然后对于每个点(i.j)，我们固定子矩形的右下角为(i.j)
+        //利用left从该行i向上寻找子矩阵左上角为第k行的矩阵个数
+        //每次将子矩阵个数加到答案中
+        for(int i=0;i<n;i++){
+            for(int j=0;j<m;j++){
+                minx = INT32_MAX;
+                for(int k=i;k>=0;k--){
+                    minx = min(left[k][j],minx);
+                    ans += minx;
+                }
+            }
+        }
+        return ans;
+    }
+};
+```
+## 1477. 找两个和为目标值且不重叠的子数组
+```
+给你一个整数数组 arr 和一个整数值 target 。
+请你在 arr 中找 两个互不重叠的子数组 且它们的和都等于 target 。可能会有多种方案，请你返回满足要求的两个子数组长度和的 最小值 。
+请返回满足要求的最小长度和，如果无法找到这样的两个子数组，请返回 -1 。
+```
+```cpp
+class Solution {
+public:
+    int minSumOfLengths(vector<int>& arr, int target) {
+        unordered_map<int, int> fuck;   // 记录前缀和出现的最后一个下标
+        int t = 0;
+        int ans = INT32_MAX;
+        vector<int> m_f;   // 记录到每个位置，和为target的最短子数组的长度
+        int mi = 0;    
+        fuck[0]  = -1;
+        for(int i = 0; i < arr.size(); i ++){
+            t += arr[i];
+            fuck[t] = i;
+            // cout << i << " ";
+            if(fuck.count(t - target)){
+                int l_i = fuck[t - target];
+                int ttt = i - l_i;
+                if(! mi) mi = ttt;
+                else mi = min(mi, ttt);
+                m_f.push_back(mi);
+                if(l_i != -1 && m_f[l_i] != 0) ans = min(ans, m_f[l_i] + ttt);
+            }else{
+                m_f.push_back(mi);
+            }
+        }
+        if(ans == INT32_MAX) return -1;
+        else return ans;
+    }
+};
+```
+## 1575. 统计所有可行路径
+```
+给你一个 互不相同 的整数数组，其中 locations[i] 表示第 i 个城市的位置。同时给你 start，finish 和 fuel 分别表示出发城市、目的地城市和你初始拥有的汽油总量
+每一步中，如果你在城市 i ，你可以选择任意一个城市 j ，满足  j != i 且 0 <= j < locations.length ，并移动到城市 j 。从城市 i 移动到 j 消耗的汽油量为 |locations[i] - locations[j]|，|x| 表示 x 的绝对值。
+请注意， fuel 任何时刻都 不能 为负，且你 可以 经过任意城市超过一次（包括 start 和 finish ）。
+请你返回从 start 到 finish 所有可能路径的数目。
+由于答案可能很大， 请将它对 10^9 + 7 取余后返回。
+```
+```cpp
+class Solution {
+public:
+    long long mod = 1e9+7;// 答案取余值
+    long long maxFuel = 200;// 输入限制大小
+    int countRoutes(vector<int>& loc, int start, int finish, int fuel) {
+        // dp[i][k]表示花正好k的油到达i点的路径数。
+        // 对于每条路径，我们可以再从i走到j，花费abs(loc[i]-loc[j])。
+        // dp[j][k+abs(loc[i]-loc[j])] += dp[i][k]
+        long sum = accumulate(loc.begin(),loc.end(),0l);
+        vector<vector<long long>> dp(loc.size()+1,vector<long long>(maxFuel+1,0));
+        int n = loc.size();
+        dp[start][0] = 1;
+        for(int k=0;k<fuel;k++){
+            for(int i=0;i<n;i++){
+                for(int j=0;j<n;j++){
+                    if(j==i) continue;
+                    if(k+abs(loc[i]-loc[j]) > maxFuel) continue;
+                    dp[j][k+abs(loc[i]-loc[j])] += dp[i][k];
+                    dp[j][k+abs(loc[i]-loc[j])] %= mod;
+                }
+            }
+        }
+        long long ans = 0;
+        for(int k=0;k<=fuel;k++){
+            ans += dp[finish][k];
+            ans %= mod;
+        }
+        return ans;
+        
+    }
+};
+```
+## 1423. 可获得的最大点数
+PS: 本题使用C++版dp只能通过33/40个测试用例，java正常。
+```
+几张卡牌 排成一行，每张卡牌都有一个对应的点数。点数由整数数组 cardPoints 给出。
+每次行动，你可以从行的开头或者末尾拿一张卡牌，最终你必须正好拿 k 张卡牌。
+你的点数就是你拿到手中的所有卡牌的点数之和。
+给你一个整数数组 cardPoints 和整数 k，请你返回可以获得的最大点数。
+```
+```cpp
+class Solution {
+public:
+    int maxScore(vector<int>& cardPoints, int k) {
+        //dp[i][j] 代表开头取i张 末尾取j张
+        vector<vector<int>> dp(k+1,vector<int>(k+1,0));
+        for (int i=1;i<=k;i++)
+        {
+            dp[0][i]=dp[0][i-1]+cardPoints[cardPoints.size()-i];
+            dp[i][0]=dp[i-1][0]+cardPoints[i-1];
+        }
+        int maxNum = INT32_MIN;
+        for (int i=0;i<=k;i++)
+        {
+            maxNum = max(maxNum,dp[i][0]+dp[0][k-i]);
+        }
+        return maxNum;
+    }
+};
+```
