@@ -6,21 +6,28 @@
 每行的元素从左到右升序排列。
 每列的元素从上到下升序排列。
 ```
+```
+思路：
+利用每一行有序的信息，我们可以关于将二维矩阵分成四个部分，其中target只可能落在两个小矩阵里面，然后再递归对这两个小矩阵查找。
+步骤1：当前矩阵下，检验矩阵是否为空，以及target是否大于最大值或者小于最小值，如果任何一个满足，则返回false；如都不满足，则进行步骤2
+步骤2：mid=中间列的索引，计算row使得matrix[row-1][mid]<=target<=matrix[row][mid]，如果target=matrix[row-1][mid]或者target=matrix[row][mid]，则返回true；否则，进行步骤3
+步骤3：通过步骤2可知，matrix[row-1][mid]<target<matrix[row][mid]严格成立，我们据此将矩阵划分成四个小矩阵。左上角和右下角矩阵是不可能的，target只可能落在左下角和右上角矩阵内。
+步骤4：对左下角和右上角矩阵做递归
+```
 ```cpp
 class Solution {
 public:
     bool search_submatrix(vector<vector<int>>& matrix, int target,
     int left,int right,int up,int down)
     {
-        if (left > right || up > down)// 搜索完
+        if (left > right || up > down)
             return false;
-        else if (target < matrix[up][left] || target > matrix[down][right])// 比最小值小或比最大值大
+        else if (target < matrix[up][left] || target > matrix[down][right])
             return false;
         else
         {
             int row = up;
-            int mid = (left + right);
-            // 尝试将搜索范围缩小到左下角和右上角
+            int mid = (left + right) / 2;
             while (row <= down and target >= matrix[row][mid])
             {
                 if (target == matrix[row][mid])
@@ -42,70 +49,71 @@ public:
     }
 };
 ```
-## 315.计算右侧小于当前元素的个数(归并排序+索引数组)
+## 315.计算右侧小于当前元素的个数
 ```
 给定一个整数数组 nums，按要求返回一个新数组 counts。数组 counts 有该性质： counts[i] 的值是  nums[i] 右侧小于 nums[i] 的元素的数量。
 ```
-```java
+```
+思路：归并排序逆序数，使用索引数组。
+```
+```cpp
 class Solution {
-    int[] counter;
-    public List<Integer> countSmaller(int[] nums) {
-        List<Integer> res=new ArrayList<>(nums.length);
-        if (nums.length<1)
-            return res;
-        //初始化索引
-        int[] indexes=new int[nums.length];
-        counter=new int[nums.length];
-        for (int i=0;i<nums.length;++i)
-            indexes[i]=i;
-        helper(nums,indexes,0,nums.length-1);
-        for (int item:counter)
-            res.add(item);
-        return res;
+public:
+    vector<int> counter;
+    void merge(vector<int>& nums,vector<int>& indexes,int start,int mid, int end) {
+        int left = start;
+        int right = mid+1;
+        vector<int> tmpMerge(end-start+1);
+        vector<int> tmpIndex(end-start+1);
+        int p=0;
+        for (;left<=mid&&right<=end;){
+            if (nums[right]>=nums[left]){
+                tmpMerge[p]=nums[left];
+                tmpIndex[p++]=indexes[left];
+                counter[indexes[left++]]+=(right-mid-1);
+            } else{//nums[lef]>nums[right]
+                tmpMerge[p]=nums[right];
+                tmpIndex[p++]=indexes[right++];
+            }
+        }
+        while (left<=mid) {
+            tmpMerge[p]=nums[left];
+            tmpIndex[p++]=indexes[left];
+            counter[indexes[left++]]+=(right-mid-1);
+        }
+        while (right<=end) {
+            tmpMerge[p]=nums[right];
+            tmpIndex[p++]=indexes[right++];
+        }
+        //复制回原数组
+        p=0;
+        for (int i=start;i<=end;++i) {
+            nums[i]=tmpMerge[p];
+            indexes[i]=tmpIndex[p++];
+        }
     }
-
-    public void helper(int[] nums,int[] indexes,int start,int end){
-        if(start>=end)
-            return;
+    void helper(vector<int>& nums,vector<int>& indexes,int start,int end) {
+        if (start>=end) return;
         int mid=start+(end-start)/2;
         helper(nums,indexes,start,mid);
         helper(nums,indexes,mid+1,end);
         if (nums[mid]>nums[mid+1])
             merge(nums,indexes,start,mid,end);
     }
-
-    public void merge(int[] nums,int[] indexes,int start,int mid,int end){
-        int left=start,right=mid+1;
-        int[] merge=new int[end-start+1];
-        int[] tmpIndex=new int[end-start+1];
-        int p=0;
-        for (;left<=mid&&right<=end;) {
-            if (nums[right]>=nums[left]){
-                merge[p]=nums[left];
-                tmpIndex[p++]=indexes[left];
-                counter[indexes[left++]]+=(right-mid-1);
-            } else{//nums[lef]>nums[right]
-                merge[p]=nums[right];
-                tmpIndex[p++]=indexes[right++];
-            }
-        }
-        while (left<=mid) {
-            merge[p]=nums[left];
-            tmpIndex[p++]=indexes[left];
-            counter[indexes[left++]]+=(right-mid-1);
-        }
-        while (right<=end) {
-            merge[p]=nums[right];
-            tmpIndex[p++]=indexes[right++];
-        }
-        //复制回原数组
-        p=0;
-        for (int i=start;i<=end;++i) {
-            nums[i]=merge[p];
-            indexes[i]=tmpIndex[p++];
-        }
+    vector<int> countSmaller(vector<int>& nums) {
+        vector<int> res;
+        if (nums.size()<1) return res;
+        // 初始化索引数组
+        vector<int> indexes(nums.size());
+        counter.resize(nums.size());
+        for (int i=0;i<nums.size();i++)
+            indexes[i]=i;
+        helper(nums,indexes,0,nums.size()-1);
+        for (int item:counter)
+            res.push_back(item);
+        return res;
     }
-}
+};
 ```
 ## 327.区间和计数
 ```
@@ -196,9 +204,7 @@ public:
 ## 658. 找到 K 个最接近的元素(二分查找)
 ```
 给定一个排序好的数组 arr ，两个整数 k 和 x ，从数组中找到最靠近 x（两数之差最小）的 k 个数。返回的结果必须要是按升序排好的。
-
 整数 a 比整数 b 更接近 x 需要满足：
-
 |a - x| < |b - x| 或者
 |a - x| == |b - x| 且 a < b
 ```
@@ -274,7 +280,6 @@ public:
 ```
 给定一个字符串 s，将 s 分割成一些子串，使每个子串都是回文串。
 返回 s 所有可能的分割方案。
-
 示例:
 输入: "aab"
 输出:
@@ -421,7 +426,7 @@ public:
         }
     }
     vector<vector<int>> permute(vector<int>& nums) {
-        vector<vector<int> > result;
+        vector<vector<int>> result;
         backtrack(result, nums, 0, (int)nums.size());
         return result;
     }
@@ -471,13 +476,11 @@ public:
 ## 980. 不同路径 III
 ```
 在二维网格 grid 上，有 4 种类型的方格：
-
 1 表示起始方格。且只有一个起始方格。
 2 表示结束方格，且只有一个结束方格。
 0 表示我们可以走过的空方格。
 -1 表示我们无法跨越的障碍。
 返回在四个方向（上、下、左、右）上行走时，从起始方格到结束方格的不同路径的数目。
-
 每一个无障碍方格都要通过一次，但是一条路径中不能重复通过同一个方格。
 ```
 ```cpp
@@ -682,7 +685,7 @@ public:
 };
 ```
 # 分支限界法
-## 698. 划分为k个相等的子集(写不来)
+## 698. 划分为k个相等的子集
 ```
 给定一个整数数组  nums 和一个正整数 k，找出是否有可能把这个数组分成 k 个非空子集，其总和都相等。
 示例 1：
@@ -704,7 +707,7 @@ public:
         return dfs(n-1, len, n, nums, vis);
     }
     
-    //当前从id位置开始枚举,还有有个sz子集未合法是否能够使所有子集合法
+    //当前从id位置开始枚举,还有sz个子集未合法是否能够使所有子集合法
     bool dfs(int id, int cur_len, int sz, vector<int>& arr, vector<bool>& vis) {
         if(sz == 0) return true; //n个数全部装下
         bool isok;
@@ -719,7 +722,6 @@ public:
                 //否则该数属于其他子集,当前子集不应该取它,进行判重剪枝
                 vis[i] = false; //回溯
                 while(i>0 && arr[i-1]==arr[i]) i--;
-                
             }
         }
         return false;
@@ -800,8 +802,7 @@ public:
         }
         que.push(make_pair(make_pair(0,1), true));
         while (!que.empty()) {            
-            size = que.size();			
-            //cout << "****** retCnt = " << retCnt << ", n:" << n << endl;
+            size = que.size();
 			int r;
 			int c;
 			bool isPing;
@@ -950,6 +951,7 @@ public:
         int count = 0;
         while (true)
         {
+            // 下一跳到达终点
             if (currentIndex + nums[currentIndex] >= nums.size() - 1) 
                 return count + 1;
             int max = currentIndex + nums[currentIndex];
@@ -957,6 +959,7 @@ public:
             for (int i = 1;i<=nums[currentIndex];i++)
             {
                 int currentLen = currentIndex + i + nums[currentIndex+i];
+                // 选取可跳范围最大的点
                 if (currentLen>=max)
                 {
                     max = currentLen;

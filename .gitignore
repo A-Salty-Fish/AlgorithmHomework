@@ -162,3 +162,20 @@ $RECYCLE.BIN/
 
 # VisualStudioCode
 .vscode
+*.docx
+
+*.cfg
+
+*.pdf
+
+*.xml
+
+LeetCode/LeetCode_.md
+
+*.filters
+
+*.vcxproj
+
+Week5/Week5/Week5.cpp
+
+Week5/.vs/Week5/v16/Browse.VC.db

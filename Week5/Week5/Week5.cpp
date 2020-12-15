@@ -1,8 +1,10 @@
-﻿
-#include <iostream>
+﻿#include <iostream>
+#include <vector>
+#include "5.h"
+using namespace std;
 
 int main()
 {
-    std::cout << "Hello World!\n";
-}
+	GetArray(0);
 
+}
